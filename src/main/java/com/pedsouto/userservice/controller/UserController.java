@@ -49,13 +49,15 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<UserDto> findByEmail(@RequestParam("email") String email) {
-        return ResponseEntity.ok(userService.findByEmail(email));
+    public ResponseEntity<UserDto> findByEmail(@RequestParam("email") String email,
+                                               Authentication authentication) {
+        return ResponseEntity.ok(userService.findByEmail(email, authentication.getName()));
     }
 
     @DeleteMapping("/{email}")
-    public ResponseEntity<Void> deleteByEmail(@PathVariable("email") String email) {
-        userService.deleteByEmail(email);
+    public ResponseEntity<Void> deleteByEmail(@PathVariable("email") String email,
+                                              Authentication authentication) {
+        userService.deleteByEmail(email, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
@@ -67,14 +69,16 @@ public class UserController {
 
     @PutMapping("/address")
     public ResponseEntity<AddressDto> updateAddress(@RequestBody AddressDto addressDto,
-                                                    @RequestParam("id") Long id) {
-        return ResponseEntity.ok(userService.updateAddress(id, addressDto));
+                                                    @RequestParam("id") Long id,
+                                                    Authentication authentication) {
+        return ResponseEntity.ok(userService.updateAddress(id, addressDto, authentication.getName()));
     }
 
     @PutMapping("/phone")
     public ResponseEntity<PhoneDto> updatePhone(@RequestBody PhoneDto phoneDto,
-                                                @RequestParam("id") Long id) {
-        return ResponseEntity.ok(userService.updatePhone(id, phoneDto));
+                                                @RequestParam("id") Long id,
+                                                Authentication authentication) {
+        return ResponseEntity.ok(userService.updatePhone(id, phoneDto, authentication.getName()));
     }
 
     @PostMapping("/address")
