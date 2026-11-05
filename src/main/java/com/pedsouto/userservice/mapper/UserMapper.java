@@ -7,6 +7,7 @@ import com.pedsouto.userservice.infra.entity.Address;
 import com.pedsouto.userservice.infra.entity.Phone;
 import com.pedsouto.userservice.infra.entity.User;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -21,6 +22,7 @@ public interface UserMapper {
 
     User toUserEntity(UserDto dto);
 
+    @Mapping(target = "password", ignore = true)
     UserDto toUserDto(User entity);
 
     void updateUserFromDto(UserDto dto, @MappingTarget User entity);
