@@ -8,6 +8,7 @@ import com.pedsouto.userservice.infra.entity.Phone;
 import com.pedsouto.userservice.infra.entity.User;
 import com.pedsouto.userservice.infra.exception.ConflictException;
 import com.pedsouto.userservice.infra.exception.ResourceNotFoundException;
+import com.pedsouto.userservice.infra.exception.UnauthorizedException;
 import com.pedsouto.userservice.infra.repository.AddressRepository;
 import com.pedsouto.userservice.infra.repository.PhoneRepository;
 import com.pedsouto.userservice.infra.repository.UserRepository;
@@ -40,7 +41,9 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserDto findByEmail(String email) {
+    public UserDto findByEmail(String email, String authenticatedEmail) {
+        validateOwner(email, authenticatedEmail);
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
@@ -48,7 +51,9 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteByEmail(String email) {
+    public void deleteByEmail(String email, String authenticatedEmail) {
+        validateOwner(email, authenticatedEmail);
+
         if (!userRepository.existsByEmail(email)) {
             throw new ResourceNotFoundException("User not found with email: " + email);
         }
@@ -73,8 +78,11 @@ public class UserService {
     }
 
     @Transactional
-    public AddressDto updateAddress(Long id, AddressDto addressDto) {
-        Address addressEntity = addressRepository.findById(id)
+    public AddressDto updateAddress(Long id, AddressDto addressDto, String authenticatedEmail) {
+        User user = userRepository.findByEmail(authenticatedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + authenticatedEmail));
+
+        Address addressEntity = addressRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
 
         userMapper.updateAddressFromDto(addressDto, addressEntity);
@@ -83,8 +91,11 @@ public class UserService {
     }
 
     @Transactional
-    public PhoneDto updatePhone(Long id, PhoneDto phoneDto) {
-        Phone phoneEntity = phoneRepository.findById(id)
+    public PhoneDto updatePhone(Long id, PhoneDto phoneDto, String authenticatedEmail) {
+        User user = userRepository.findByEmail(authenticatedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + authenticatedEmail));
+
+        Phone phoneEntity = phoneRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Phone not found with id: " + id));
 
         userMapper.updatePhoneFromDto(phoneDto, phoneEntity);
@@ -121,6 +132,12 @@ public class UserService {
     private void validateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("Email already registered: " + email);
+        }
+    }
+
+    private void validateOwner(String email, String authenticatedEmail) {
+        if (!email.equalsIgnoreCase(authenticatedEmail)) {
+            throw new UnauthorizedException("You can only access your own user data");
         }
     }
 }
